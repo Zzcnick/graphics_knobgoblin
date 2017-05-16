@@ -11,24 +11,54 @@ public class Picture {
 	    // Script Reading
 	    String f = args[0]; // Filename
 	    BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(f))));
-	    StreamTokenizer st = new StreamTokenizer(br);
-	    st.slashSlashComments(true);
-	    st.eolIsSignificant(true);
 
 	    // Initialization
 	    int token;
 	    ArrayDeque<Object> buffer = new ArrayDeque<Object>();
 	    ArrayDeque<Integer> typebuffer = new ArrayDeque<Integer>();
 
+	    // Pass 1 - Checking Frames and Vary
+	    boolean frames = false;
+	    boolean vary = false;
+	    StreamTokenizer st1 = new StreamTokenizer(br);
+	    st1.slashSlashComments(true);
+	    st1.eolIsSignificant(true);
+
+	    while ((token = st1.nextToken()) != -1) {
+		if (token == StreamTokenizer.TT_WORD) {
+		    if (st1.sval.equals("frames")) { // Keyword Frames
+			if ((token = st1.nextToken()) == StreamTokenizer.TT_NUMBER)
+			    if (st1.nval > 0) // Frame Value > 0
+				frames = true;
+		    }
+		    else if (st1.sval.equals("vary")) { // Keyword Vary
+			vary = true;
+		    }
+		}
+	    } // Complete Token Parsing For Pass One
+	    
+	    System.out.println("Frames: " + frames); // Debugging
+	    System.out.println("Vary  : " + vary); // Debugging
+
+	    if (vary && !frames) { // Vary is true, Frames is false
+		System.out.println("ERROR: vary keyword used without declaring frames");
+		throw new IOException();
+	    }
+
+	    // Pass 3 - Drawing
+	    StreamTokenizer st3 = new StreamTokenizer(br);
+	    st3.slashSlashComments(true);
+	    st3.eolIsSignificant(true);
+
 	    // Parsing and Execution
-	    while ((token = st.nextToken()) != -1) {
+	    while ((token = st3.nextToken()) != -1) {
 		if (token == StreamTokenizer.TT_NUMBER) {
-		    // System.out.println(st.nval); // Debugging
-		    buffer.offer(st.nval);
+		    // System.out.println(st3.nval); // Debugging
+		    buffer.offer(st3.nval);
 		    typebuffer.offer(token);
 		} else if (token == StreamTokenizer.TT_WORD) {
-		    // System.out.println(st.sval); // Debugging 
-		    buffer.offer(st.sval);
+		    // System.out.println(st3.sval); // Debugging 
+		    buffer.offer(st3.sval);
 		    typebuffer.offer(token);
 		} else if (token == StreamTokenizer.TT_EOL) {
 		    // System.out.println("END OF LINE: EXECUTE COMMAND\n"); // Debugging
