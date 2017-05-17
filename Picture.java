@@ -2,6 +2,11 @@ import java.io.*;
 import java.util.*;
 
 public class Picture {
+    public static final int NUM = StreamTokenizer.TT_NUMBER;
+    public static final int STR = StreamTokenizer.TT_WORD;
+    public static final int EOL = StreamTokenizer.TT_EOL;
+    public static final int EOF = StreamTokenizer.TT_EOF;
+
     public static void main(String[] args) 
 	throws FileNotFoundException, IOException {
 	if (args.length > 0) { // Parser
@@ -25,9 +30,9 @@ public class Picture {
 	    st1.eolIsSignificant(true);
 
 	    while ((token = st1.nextToken()) != -1) {
-		if (token == StreamTokenizer.TT_WORD) {
+		if (token == STR) {
 		    if (st1.sval.equals("frames")) { // Keyword Frames
-			if ((token = st1.nextToken()) == StreamTokenizer.TT_NUMBER)
+			if ((token = st1.nextToken()) == NUM)
 			    if (st1.nval > 0) // Frame Value > 0
 				frames = true;
 		    }
@@ -37,8 +42,8 @@ public class Picture {
 		}
 	    } // Complete Token Parsing For Pass One
 	    
-	    System.out.println("Frames: " + frames); // Debugging
-	    System.out.println("Vary  : " + vary); // Debugging
+	    // System.out.println("Frames: " + frames); // Debugging
+	    // System.out.println("Vary  : " + vary); // Debugging
 
 	    if (vary && !frames) { // Vary is true, Frames is false
 		System.out.println("ERROR: vary keyword used without declaring frames");
@@ -46,21 +51,22 @@ public class Picture {
 	    }
 
 	    // Pass 3 - Drawing
+	    br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(f))));
 	    StreamTokenizer st3 = new StreamTokenizer(br);
 	    st3.slashSlashComments(true);
 	    st3.eolIsSignificant(true);
 
 	    // Parsing and Execution
 	    while ((token = st3.nextToken()) != -1) {
-		if (token == StreamTokenizer.TT_NUMBER) {
+		if (token == NUM) {
 		    // System.out.println(st3.nval); // Debugging
 		    buffer.offer(st3.nval);
 		    typebuffer.offer(token);
-		} else if (token == StreamTokenizer.TT_WORD) {
+		} else if (token == STR) {
 		    // System.out.println(st3.sval); // Debugging 
 		    buffer.offer(st3.sval);
 		    typebuffer.offer(token);
-		} else if (token == StreamTokenizer.TT_EOL) {
+		} else if (token == EOL) {
 		    // System.out.println("END OF LINE: EXECUTE COMMAND\n"); // Debugging
 		    // System.out.println("COMMAND: " + buffer); // Debugging
 		    // System.out.println("TYPES  : " + typebuffer); // Debugging
@@ -75,6 +81,18 @@ public class Picture {
 	    return;
 	} 
     }
+
+    // Execution Helper - Type Checking
+    public static boolean typecheck(ArrayDeque<Integer> typebuffer,
+				    int[] types) {
+	if (typebuffer.size() != types.length)
+	    return false;
+	for (int i = 0; i < types.length; i++)
+	    if (types[i] != typebuffer.poll())
+		return false;
+	return true;
+    }
+
     // Execution Command for Parser
     public static void execute(Canvas c,
 			       ArrayDeque<Object> buffer,
@@ -84,7 +102,7 @@ public class Picture {
 	Pixel color = new Pixel(0,0,0);
 	if (!typebuffer.isEmpty()) {
 	    // Commands 
-	    if (typebuffer.poll() != -3) { 
+	    if (typebuffer.poll() != STR) { 
 		return;
 	    } else {
 		cmd = nextString(buffer);
@@ -95,105 +113,110 @@ public class Picture {
 		cmdpad += " ";
 	    System.out.println("Executing Command: " + cmdpad + "| Inputs: " + buffer);
 	    
-	    int len = typebuffer.size(); // Input - Excludes Command
+	    boolean executed = false;
 	    if (cmd.equals("line")) {
-		if (len == 6)
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM, NUM, NUM}))
 		    c.edge(nextDouble(buffer), nextDouble(buffer), 
 			   nextDouble(buffer), nextDouble(buffer),
 			   nextDouble(buffer), nextDouble(buffer), 
 			   color);
 	    } else if (cmd.equals("bezier")) {
-		if (len == 8)
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM}))
 		    c.bezier(nextDouble(buffer), nextDouble(buffer),
 			     nextDouble(buffer), nextDouble(buffer),
 			     nextDouble(buffer), nextDouble(buffer),
 			     nextDouble(buffer), nextDouble(buffer),
 			     color);
 	    } else if (cmd.equals("hermite")) {
-		if (len == 8)
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM}))
 		    c.hermite(nextDouble(buffer), nextDouble(buffer),
 			      nextDouble(buffer), nextDouble(buffer),
 			      nextDouble(buffer), nextDouble(buffer),
 			      nextDouble(buffer), nextDouble(buffer),
 			      color);
 	    } else if (cmd.equals("circle")) {
-		if (len == 4)
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM}))
 		    c.circle(nextDouble(buffer), nextDouble(buffer),
 			     nextDouble(buffer), nextDouble(buffer),
 			     color);
 	    } else if (cmd.equals("box")) {
-		if (len == 6)
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM, NUM, NUM}))
 		    c.box(nextDouble(buffer), nextDouble(buffer),
 			  nextDouble(buffer), nextDouble(buffer),
 			  nextDouble(buffer), nextDouble(buffer),
 			  color);
 	    } else if (cmd.equals("sphere")) {
-		if (len == 4)
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM}))
 		    c.sphere(nextDouble(buffer), nextDouble(buffer), 
 			     nextDouble(buffer), nextDouble(buffer),
 			     color);
 	    } else if (cmd.equals("torus")) {
-		if (len == 5)
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM, NUM}))
 		    c.torus(nextDouble(buffer), nextDouble(buffer),
 			    nextDouble(buffer), nextDouble(buffer),
 			    nextDouble(buffer), color);
 	    } else if (cmd.equals("color")) {
-		if (len == 3)
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM}))
 		    color = new Pixel(nextInt(buffer), 
 				      nextInt(buffer),
 				      nextInt(buffer));
 	    
 	    } else if (cmd.equals("push")) {
-		if (len == 0)
+		if (executed = typecheck(typebuffer, new int[]{}))
 		    c.push();
 	    } else if (cmd.equals("pop")) {
-		if (len == 0)
+		if (executed = typecheck(typebuffer, new int[]{}))
 		    c.pop();
 	    } else if (cmd.equals("scale")) {
-		if (len == 3) 
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM})) 
 		    c.scale(nextDouble(buffer),
 			    nextDouble(buffer),
 			    nextDouble(buffer));
 	    } else if (cmd.equals("move")) {
-		if (len == 3) 
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM}))
 		    c.translate(nextDouble(buffer),
 				nextDouble(buffer),
 				nextDouble(buffer));
 	    } else if (cmd.equals("rotate")) {
-		if (len == 2) 
+		if (executed = typecheck(typebuffer, new int[]{STR, NUM}))
 		    c.rotate(nextChar(buffer), nextDouble(buffer));
 	    } else if (cmd.equals("apply")) {
-		if (len == 0)
+		if (executed = typecheck(typebuffer, new int[]{}))
 		    c.apply();
 	    } else if (cmd.equals("clear")) {
-		if (len == 0)
+		if (executed = typecheck(typebuffer, new int[]{}))
 		    c.clearEdges();
 	    } else if (cmd.equals("ident")) {
-		if (len == 0)
+		if (executed = typecheck(typebuffer, new int[]{}))
 		    c.clearTransform();
 	    } else if (cmd.equals("draw")) {
-		if (len == 0)
+		if (executed = typecheck(typebuffer, new int[]{}))
 		    c.draw();
 	    } else if (cmd.equals("save")) {
-		if (len == 1) {
+		if (executed = typecheck(typebuffer, new int[]{STR})) {
 		    c.draw();
 		    c.save(nextString(buffer));
 		}
 	    } else if (cmd.equals("savestate")) {
-		if (len == 0)
+		if (executed = typecheck(typebuffer, new int[]{}))
 		    c.savestate();
 	    } else if (cmd.equals("loadstate")) {
-		if (len == 0)
+		if (executed = typecheck(typebuffer, new int[]{}))
 		    c.loadstate();
 	    } else if (cmd.equals("mode")) {
-		if (len == 1)
+		if (executed = typecheck(typebuffer, new int[]{NUM}))
 		    c.setMode(nextInt(buffer));
 	    } else if (cmd.equals("reset")) {
-		if (len == 5) 
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM, NUM}))
 		    c = new Canvas(nextInt(buffer), nextInt(buffer),
 				   nextInt(buffer), nextInt(buffer),
 				   nextInt(buffer));
 	    } 
+	    
+	    // Check if Command Executed
+	    if (!executed)    
+		System.out.println("ERROR: " + buffer + " does not match any implementation of " + cmd);
+
 	    buffer.clear();
 	    typebuffer.clear();
 	}
