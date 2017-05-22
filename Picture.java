@@ -48,6 +48,10 @@ public class Picture {
 	    if (vary && !frames) { // Vary is true, Frames is false
 		System.out.println("ERROR: vary keyword used without declaring frames");
 		throw new IOException();
+	    } else if (frames) {
+		System.out.println("SAVETYPE: ANIMATION");
+	    } else {
+		System.out.println("SAVETYPE: SINGLE IMAGE");
 	    }
 
 	    // Pass 2 - Generating Knobs and Varying
@@ -58,15 +62,24 @@ public class Picture {
 		st2.eolIsSignificant(true);
 
 		while ((token = st2.nextToken()) != -1) {
-		    if (token == STR) 
+		    if (token == STR) {
 			if (st2.sval.equals("frames")) {
 			    token = st2.nextToken(); // Number > 0, Checked By Pass 1
 			    c.initFrames(st2.nval); // Initialize Frames in Canvas
 			}
+			else if (st2.sval.equals("vary")) { // Needs Checking 
+			    token = st2.nextToken(); String knobname = st2.sval;
+			    token = st2.nextToken(); int startFrame = (int)st2.nval;
+			    token = st2.nextToken(); int endFrame = (int)st2.nval;
+			    token = st2.nextToken(); double startValue = st2.nval;
+			    token = st2.nextToken(); double endValue = st2.nval;
+			    c.addKnob(knobname, 
+				      startFrame, endFrame,
+				      startValue, endValue);
+			}
 		}
-
-		c.init
 	    }
+	    
 
 	    // Pass 3 - Drawing
 	    br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(f))));
@@ -92,6 +105,8 @@ public class Picture {
 		} else break; // Should Not Happen, Failsafe
 	    }
 	    execute(c, buffer, typebuffer);
+	    if (frames) 
+		c.saveAnimation();
 	    // System.out.println("END OF FILE: EXECUTE COMMAND AND END\n"); // Debugging
 	    // System.out.println("COMMAND: " + buffer); // Debugging
 	    // System.out.println("TYPES  : " + typebuffer); // Debugging
@@ -129,7 +144,7 @@ public class Picture {
 	    String cmdpad = cmd;
 	    while (cmdpad.length() < pad)
 		cmdpad += " ";
-	    System.out.println("Executing Command: " + cmdpad + "| Inputs: " + buffer);
+	    System.out.println("Executing Command: " + cmdpad + "| Inputs: " + buffer); // Debugging
 	    
 	    boolean executed = false;
 	    if (cmd.equals("line")) {
@@ -214,6 +229,10 @@ public class Picture {
 		if (executed = typecheck(typebuffer, new int[]{STR})) {
 		    c.draw();
 		    c.save(nextString(buffer));
+		} 
+		else if (executed = typecheck(typebuffer, new int[]{})) {
+		    c.draw();
+		    c.save();
 		}
 	    } else if (cmd.equals("savestate")) {
 		if (executed = typecheck(typebuffer, new int[]{}))
@@ -229,6 +248,12 @@ public class Picture {
 		    c = new Canvas(nextInt(buffer), nextInt(buffer),
 				   nextInt(buffer), nextInt(buffer),
 				   nextInt(buffer));
+	    } else if (cmd.equals("frames")) {
+		if (executed = typecheck(typebuffer, new int[]{NUM}))
+		    ; // Nothing
+	    } else if (cmd.equals("basename")) {
+		if (executed = typecheck(typebuffer, new int[]{STR}))
+		    c.setBasename(nextString(buffer));
 	    } 
 	    
 	    // Check if Command Executed

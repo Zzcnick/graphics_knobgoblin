@@ -11,8 +11,11 @@ public class Canvas {
     private Stack<Matrix> transform; // Transformation Matrix
     private int x, y; // Dimensions
     private int mode; // Edges or Polygons
-    private ArrayList<Stack<Matrix>> frames; // Frames
-    
+    private HashMap<String, ArrayList<Matrix>> frames = null; // Frames
+    private ArrayList<String> order = null; // Order of Knobs
+    private int framecount = 0;
+    private String basename = "out";
+
     // Constructors
     public Canvas() {
 	canvas = new Pixel[500][500];
@@ -60,8 +63,10 @@ public class Canvas {
     }
 
     // Frame Initialization
-    public void initFrames(int n) {
-	
+    public void initFrames(double n) {
+	frames = new HashMap<String, ArrayList<Matrix>>();
+	order = new ArrayList<String>();
+	framecount = (int)n;
     }
 
     // Accessors + Mutators
@@ -86,6 +91,9 @@ public class Canvas {
 
     public int setMode(int md) {
 	return mode = md;
+    }
+    public String setBasename(String bn) {
+	return basename = bn;
     }
 
     // Transformations
@@ -707,6 +715,9 @@ public class Canvas {
     }
 
     // File Creation
+    public boolean save() throws FileNotFoundException {
+	return save("out.ppm");
+    }
     public boolean save(String name) throws FileNotFoundException {
 	PrintWriter pw = new PrintWriter(new File(name));
 	pw.print("P3 " + x + " " + y + " 255\n"); // Heading
@@ -717,6 +728,22 @@ public class Canvas {
 	    }
 	}
 	pw.close();
+	return true;
+    }
+
+    public boolean saveAnimation() throws FileNotFoundException {
+	for (int i = 0; i < framecount; i++) {
+	    // Name Buffer 
+	    int padlen = basename.length() + 3;
+	    String savename = basename;
+	    while (savename.length() + ("" + i).length() < padlen)
+		savename += "0";
+	    savename += i + ".ppm";
+	    
+	    // Saving
+	    draw();
+	    save(savename);
+	}
 	return true;
     }
 }

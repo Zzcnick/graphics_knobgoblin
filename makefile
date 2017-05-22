@@ -1,5 +1,5 @@
 all: Picture.java
-	javac Picture.java && java Picture test.scr && display robot.png
+	javac Picture.java && java Picture test.scr 
 
 run2: Picture.java
 	make && echo "Running..." && java Picture && make png && rm out.ppm && echo "Saved as out.png" && display out.png
