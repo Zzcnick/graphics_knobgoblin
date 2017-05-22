@@ -50,6 +50,24 @@ public class Picture {
 		throw new IOException();
 	    }
 
+	    // Pass 2 - Generating Knobs and Varying
+	    if (frames && vary) {
+		br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(f))));
+		StreamTokenizer st2 = new StreamTokenizer(br);
+		st2.slashSlashComments(true);
+		st2.eolIsSignificant(true);
+
+		while ((token = st2.nextToken()) != -1) {
+		    if (token == STR) 
+			if (st2.sval.equals("frames")) {
+			    token = st2.nextToken(); // Number > 0, Checked By Pass 1
+			    c.initFrames(st2.nval); // Initialize Frames in Canvas
+			}
+		}
+
+		c.init
+	    }
+
 	    // Pass 3 - Drawing
 	    br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(f))));
 	    StreamTokenizer st3 = new StreamTokenizer(br);

@@ -11,6 +11,7 @@ public class Canvas {
     private Stack<Matrix> transform; // Transformation Matrix
     private int x, y; // Dimensions
     private int mode; // Edges or Polygons
+    private ArrayList<Stack<Matrix>> frames; // Frames
     
     // Constructors
     public Canvas() {
@@ -56,6 +57,11 @@ public class Canvas {
     public Canvas(int x, int y, int R, int G, int B, int md) {
 	this(x, y, R, G, B);
 	mode = md;
+    }
+
+    // Frame Initialization
+    public void initFrames(int n) {
+	
     }
 
     // Accessors + Mutators
