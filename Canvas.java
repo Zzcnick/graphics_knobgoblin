@@ -9,6 +9,7 @@ public class Canvas {
     private Pixel[][] save; // Save State
     private Matrix edges; // Lines
     private Stack<Matrix> transform; // Transformation Matrix
+    private Pixel defaultColor = new Pixel(0,0,0);
 
     private int x, y; // Dimensions
     private int mode; // Edges or Polygons
@@ -90,6 +91,7 @@ public class Canvas {
 	fill(255, 255, 255);
 	edges = new Matrix();
 	transform = new Stack<Matrix>();
+	defaultColor = new Pixel(0,0,0);
     }
 
     // Accessors + Mutators
@@ -125,6 +127,9 @@ public class Canvas {
     }
     public String setBasename(String bn) {
 	return basename = bn;
+    }
+    public Pixel setDefaultColor(Pixel p) {
+	return defaultColor = p;
     }
 
     // Transformations
@@ -245,7 +250,7 @@ public class Canvas {
     }
     public boolean box(double x, double y, double z, 
 		       double dx, double dy, double dz) {
-	return box(x, y, z, dx, dy, dz, new Pixel(0,0,0));
+	return box(x, y, z, dx, dy, dz, defaultColor);
     }
     public Matrix box_edges(double x, double y, double z, 
 			    double dx, double dy, double dz, Pixel p) {
@@ -288,7 +293,7 @@ public class Canvas {
     }
     public Matrix box_edges(double x, double y, double z, 
 			    double dx, double dy, double dz) {
-	return box_edges(x, y, z, dx, dy, dz, new Pixel(0,0,0));
+	return box_edges(x, y, z, dx, dy, dz, defaultColor);
     }
 
     public boolean sphere(double cx, double cy, double cz, double r, Pixel p) {
@@ -299,7 +304,7 @@ public class Canvas {
 	return true;
     }
     public boolean sphere(double cx, double cy, double cz, double r) {
-	return sphere(cx, cy, cz, r, new Pixel(0,0,0));
+	return sphere(cx, cy, cz, r, defaultColor);
     }
     public Matrix sphere_edges(double cx, double cy, double cz, double r, Pixel p) {
 	Matrix em = new Matrix();
@@ -357,7 +362,7 @@ public class Canvas {
 	return em;
     }
     public Matrix sphere_edges(double cx, double cy, double cz, double r) {
-	return sphere_edges(cx, cy, cz, r, new Pixel(0,0,0));
+	return sphere_edges(cx, cy, cz, r, defaultColor);
     }
 
     public boolean torus(double cx, double cy, double cz, double r, double R, Pixel p) {
@@ -368,7 +373,7 @@ public class Canvas {
 	return true;
     }
     public boolean torus(double cx, double cy, double cz, double r, double R) {
-	return torus(cx, cy, cz, r, R, new Pixel(0,0,0));
+	return torus(cx, cy, cz, r, R, defaultColor);
     }
     // To Make More Efficient
     public Matrix torus_edges(double cx, double cy, double cz, double r, double R, Pixel p) {
@@ -431,7 +436,7 @@ public class Canvas {
 	return em;
     }
     public Matrix torus_edges(double cx, double cy, double cz, double r, double R) {
-	return torus_edges(cx, cy, cz, r, R, new Pixel(0,0,0));
+	return torus_edges(cx, cy, cz, r, R, defaultColor);
     }
     
     public boolean hermite(double x0, double y0, double x1, double y1,
@@ -468,7 +473,7 @@ public class Canvas {
     public boolean hermite(double x0, double y0, double x1, double y1,
 			   double dx0, double dy0, double dx1, double dy1) {
 	return hermite(x0, y0, x1, y1,
-		       dx0, dy0, dx1, dy1, new Pixel(0,0,0));
+		       dx0, dy0, dx1, dy1, defaultColor);
     }
 
     public boolean bezier(double[] points) {
@@ -519,19 +524,19 @@ public class Canvas {
 			  double x1, double y1,
 			  double x2, double y2,
 			  double x3, double y3) {
-	return bezier(x0, y0, x1, y1, x2, y2, x3, y3, new Pixel(0,0,0));
+	return bezier(x0, y0, x1, y1, x2, y2, x3, y3, defaultColor);
     }
 
     // EdgeMatrix Functions
     public boolean edge(double x1, double y1, double x2, double y2) {
-	return edges.add_edge(x1, y1, x2, y2, new Pixel(0,0,0));
+	return edges.add_edge(x1, y1, x2, y2, defaultColor);
     }
     public boolean edge(double x1, double y1, double x2, double y2, Pixel p) {
 	return edges.add_edge(x1, y1, x2, y2, p);
     }
     public boolean edge(double x1, double y1, double z1,
 			double x2, double y2, double z2) {
-	return edges.add_edge(x1, y1, z1, x2, y2, z2, new Pixel(0,0,0));
+	return edges.add_edge(x1, y1, z1, x2, y2, z2, defaultColor);
     }
     public boolean edge(double x1, double y1, double z1,
 			double x2, double y2, double z2, Pixel p) {
@@ -546,7 +551,7 @@ public class Canvas {
     public boolean triangle(double x1, double y1, double z1,
 			    double x2, double y2, double z2,
 			    double x3, double y3, double z3) {
-	return triangle(x1,y1,z1,x2,y2,z2,x3,y3,z3,new Pixel(0,0,0));
+	return triangle(x1,y1,z1,x2,y2,z2,x3,y3,z3,defaultColor);
     }
 
     public boolean draw() {

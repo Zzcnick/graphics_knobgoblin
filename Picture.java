@@ -144,7 +144,6 @@ public class Picture {
 			       int curframe) 
 	throws FileNotFoundException{
 	String cmd = "";
-	Pixel color = new Pixel(0,0,0);
 	if (!typebuffer.isEmpty()) {
 	    // Commands 
 	    if (typebuffer.poll() != STR) { 
@@ -164,49 +163,42 @@ public class Picture {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM, NUM, NUM}))
 		    c.edge(nextDouble(buffer), nextDouble(buffer), 
 			   nextDouble(buffer), nextDouble(buffer),
-			   nextDouble(buffer), nextDouble(buffer), 
-			   color);
+			   nextDouble(buffer), nextDouble(buffer));
 	    } else if (cmd.equals("bezier")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM}))
 		    c.bezier(nextDouble(buffer), nextDouble(buffer),
 			     nextDouble(buffer), nextDouble(buffer),
 			     nextDouble(buffer), nextDouble(buffer),
-			     nextDouble(buffer), nextDouble(buffer),
-			     color);
+			     nextDouble(buffer), nextDouble(buffer));
 	    } else if (cmd.equals("hermite")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM}))
 		    c.hermite(nextDouble(buffer), nextDouble(buffer),
 			      nextDouble(buffer), nextDouble(buffer),
 			      nextDouble(buffer), nextDouble(buffer),
-			      nextDouble(buffer), nextDouble(buffer),
-			      color);
+			      nextDouble(buffer), nextDouble(buffer));
 	    } else if (cmd.equals("circle")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM}))
 		    c.circle(nextDouble(buffer), nextDouble(buffer),
-			     nextDouble(buffer), nextDouble(buffer),
-			     color);
+			     nextDouble(buffer), nextDouble(buffer));
 	    } else if (cmd.equals("box")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM, NUM, NUM}))
 		    c.box(nextDouble(buffer), nextDouble(buffer),
 			  nextDouble(buffer), nextDouble(buffer),
-			  nextDouble(buffer), nextDouble(buffer),
-			  color);
+			  nextDouble(buffer), nextDouble(buffer));
 	    } else if (cmd.equals("sphere")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM}))
 		    c.sphere(nextDouble(buffer), nextDouble(buffer), 
-			     nextDouble(buffer), nextDouble(buffer),
-			     color);
+			     nextDouble(buffer), nextDouble(buffer));
 	    } else if (cmd.equals("torus")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM, NUM}))
 		    c.torus(nextDouble(buffer), nextDouble(buffer),
 			    nextDouble(buffer), nextDouble(buffer),
-			    nextDouble(buffer), color);
-	    } else if (cmd.equals("color")) { // Untested
+			    nextDouble(buffer));
+	    } else if (cmd.equals("color")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM}))
-		    color = new Pixel(nextInt(buffer), 
-				      nextInt(buffer),
-				      nextInt(buffer));
-	    
+		    c.setDefaultColor(new Pixel(nextInt(buffer), 
+						nextInt(buffer),
+						nextInt(buffer)));
 	    } else if (cmd.equals("push")) {
 		if (executed = typecheck(typebuffer, new int[]{}))
 		    c.push();
@@ -296,7 +288,10 @@ public class Picture {
 	    } else if (cmd.equals("basename")) {
 		if (executed = typecheck(typebuffer, new int[]{STR}))
 		    c.setBasename(nextString(buffer));
-	    } 
+	    } else if (cmd.equals("fill")) {
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM}))
+		    c.fill(nextInt(buffer), nextInt(buffer), nextInt(buffer));
+	    }
 	    
 	    // Check if Command Executed
 	    if (!executed)    
@@ -318,6 +313,6 @@ public class Picture {
 	return nextString(buffer).charAt(0);
     }
     public static int nextInt(ArrayDeque<Object> buffer) {
-	return (int)(buffer.poll());
+	return ((Double)(buffer.poll())).intValue();
     }
 }
