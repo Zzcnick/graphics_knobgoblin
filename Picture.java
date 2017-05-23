@@ -8,7 +8,7 @@ public class Picture {
     public static final int EOF = StreamTokenizer.TT_EOF;
 
     public static void main(String[] args) 
-	throws FileNotFoundException, IOException {
+	throws FileNotFoundException, IOException, IllegalArgumentException {
 	if (args.length > 0) { // Parser
 	    // Canvas Setup
 	    Canvas c = new Canvas(500, 500, 255, 255, 255);
@@ -24,6 +24,7 @@ public class Picture {
 
 	    // Pass 1 - Checking Frames and Vary
 	    boolean frames = false;
+	    int framecount = 1;
 	    boolean vary = false;
 	    StreamTokenizer st1 = new StreamTokenizer(br);
 	    st1.slashSlashComments(true);
@@ -33,8 +34,14 @@ public class Picture {
 		if (token == STR) {
 		    if (st1.sval.equals("frames")) { // Keyword Frames
 			if ((token = st1.nextToken()) == NUM)
-			    if (st1.nval > 0) // Frame Value > 0
+			    if (st1.nval > 0) { // Frame Value > 0
 				frames = true;
+				framecount = (int)st1.nval; // Framecount
+				c.initFrames(framecount); // Initialize Frames in Canvas
+			    } else {
+				System.out.println("ERROR: invalid number of frames");
+				throw new IllegalArgumentException();
+			    }
 		    }
 		    else if (st1.sval.equals("vary")) { // Keyword Vary
 			vary = true;
@@ -47,7 +54,7 @@ public class Picture {
 
 	    if (vary && !frames) { // Vary is true, Frames is false
 		System.out.println("ERROR: vary keyword used without declaring frames");
-		throw new IOException();
+		throw new IllegalArgumentException();
 	    } else if (frames) {
 		System.out.println("SAVETYPE: ANIMATION");
 	    } else {
@@ -63,54 +70,58 @@ public class Picture {
 
 		while ((token = st2.nextToken()) != -1) {
 		    if (token == STR) {
-			if (st2.sval.equals("frames")) {
-			    token = st2.nextToken(); // Number > 0, Checked By Pass 1
-			    c.initFrames(st2.nval); // Initialize Frames in Canvas
-			}
-			else if (st2.sval.equals("vary")) { // Needs Checking 
+			if (st2.sval.equals("vary")) { // Needs Checking 
 			    token = st2.nextToken(); String knobname = st2.sval;
 			    token = st2.nextToken(); int startFrame = (int)st2.nval;
 			    token = st2.nextToken(); int endFrame = (int)st2.nval;
 			    token = st2.nextToken(); double startValue = st2.nval;
 			    token = st2.nextToken(); double endValue = st2.nval;
-			    c.addKnob(knobname, 
-				      startFrame, endFrame,
-				      startValue, endValue);
+			    if (startFrame < 0 || endFrame >= framecount) {
+				System.out.println("ERROR: vary indices out of range");
+				throw new IllegalArgumentException();
+			    } else {
+				c.addKnob(knobname, 
+					  startFrame, endFrame,
+					  startValue, endValue);
+			    }
 			}
+		    }
 		}
 	    }
-	    
 
 	    // Pass 3 - Drawing
-	    br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(f))));
-	    StreamTokenizer st3 = new StreamTokenizer(br);
-	    st3.slashSlashComments(true);
-	    st3.eolIsSignificant(true);
+	    for (int curframe = 0; curframe < framecount; curframe++) {
+		br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(f))));
+		StreamTokenizer st3 = new StreamTokenizer(br);
+		st3.slashSlashComments(true);
+		st3.eolIsSignificant(true);
 
-	    // Parsing and Execution
-	    while ((token = st3.nextToken()) != -1) {
-		if (token == NUM) {
-		    // System.out.println(st3.nval); // Debugging
-		    buffer.offer(st3.nval);
-		    typebuffer.offer(token);
-		} else if (token == STR) {
-		    // System.out.println(st3.sval); // Debugging 
-		    buffer.offer(st3.sval);
-		    typebuffer.offer(token);
-		} else if (token == EOL) {
-		    // System.out.println("END OF LINE: EXECUTE COMMAND\n"); // Debugging
-		    // System.out.println("COMMAND: " + buffer); // Debugging
-		    // System.out.println("TYPES  : " + typebuffer); // Debugging
-		    execute(c, buffer, typebuffer);
-		} else break; // Should Not Happen, Failsafe
+		// Parsing and Execution
+		while ((token = st3.nextToken()) != -1) {
+		    if (token == NUM) {
+			// System.out.println(st3.nval); // Debugging
+			buffer.offer(st3.nval);
+			typebuffer.offer(token);
+		    } else if (token == STR) {
+			// System.out.println(st3.sval); // Debugging 
+			buffer.offer(st3.sval);
+			typebuffer.offer(token);
+		    } else if (token == EOL) {
+			// System.out.println("END OF LINE: EXECUTE COMMAND\n"); // Debugging
+			// System.out.println("COMMAND: " + buffer); // Debugging
+			// System.out.println("TYPES  : " + typebuffer); // Debugging
+			execute(c, buffer, typebuffer, curframe);
+		    } else break; // Should Not Happen, Failsafe
+		}
+		execute(c, buffer, typebuffer, curframe);
+		if (frames) {
+		    c.saveFrame(curframe);
+		    System.out.println("Saving Frame " + curframe);
+		}
+		// System.out.println("END OF FILE: EXECUTE COMMAND AND END\n"); // Debugging
+		// System.out.println("COMMAND: " + buffer); // Debugging
+		// System.out.println("TYPES  : " + typebuffer); // Debugging
 	    }
-	    execute(c, buffer, typebuffer);
-	    if (frames) 
-		c.saveAnimation();
-	    // System.out.println("END OF FILE: EXECUTE COMMAND AND END\n"); // Debugging
-	    // System.out.println("COMMAND: " + buffer); // Debugging
-	    // System.out.println("TYPES  : " + typebuffer); // Debugging
-
 	    return;
 	} 
     }
@@ -129,7 +140,8 @@ public class Picture {
     // Execution Command for Parser
     public static void execute(Canvas c,
 			       ArrayDeque<Object> buffer,
-			       ArrayDeque<Integer> typebuffer) 
+			       ArrayDeque<Integer> typebuffer,
+			       int curframe) 
 	throws FileNotFoundException{
 	String cmd = "";
 	Pixel color = new Pixel(0,0,0);
@@ -144,7 +156,8 @@ public class Picture {
 	    String cmdpad = cmd;
 	    while (cmdpad.length() < pad)
 		cmdpad += " ";
-	    System.out.println("Executing Command: " + cmdpad + "| Inputs: " + buffer); // Debugging
+	    if (c.getFramecount() == 1)
+		System.out.println("Executing Command: " + cmdpad + "| Inputs: " + buffer); // Debugging
 	    
 	    boolean executed = false;
 	    if (cmd.equals("line")) {
@@ -188,7 +201,7 @@ public class Picture {
 		    c.torus(nextDouble(buffer), nextDouble(buffer),
 			    nextDouble(buffer), nextDouble(buffer),
 			    nextDouble(buffer), color);
-	    } else if (cmd.equals("color")) {
+	    } else if (cmd.equals("color")) { // Untested
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM}))
 		    color = new Pixel(nextInt(buffer), 
 				      nextInt(buffer),
@@ -201,18 +214,44 @@ public class Picture {
 		if (executed = typecheck(typebuffer, new int[]{}))
 		    c.pop();
 	    } else if (cmd.equals("scale")) {
-		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM})) 
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM})) {
 		    c.scale(nextDouble(buffer),
 			    nextDouble(buffer),
 			    nextDouble(buffer));
+		}
+		else if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, STR})) {
+		    double x = nextDouble(buffer);
+		    double y = nextDouble(buffer);
+		    double z = nextDouble(buffer);
+		    double kv = c.getKnobValue(nextString(buffer), curframe);
+		    c.scale(x * kv, y * kv, z * kv);
+		    // System.out.println("COMMAND: scale " + x * kv + " " +  y * kv + " " + z * kv); // Debugging
+		}		    
 	    } else if (cmd.equals("move")) {
-		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM}))
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM})) {
 		    c.translate(nextDouble(buffer),
 				nextDouble(buffer),
 				nextDouble(buffer));
+		}
+		else if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, STR})) {
+		    double x = nextDouble(buffer);
+		    double y = nextDouble(buffer);
+		    double z = nextDouble(buffer);
+		    double kv = c.getKnobValue(nextString(buffer), curframe);
+		    c.translate(x * kv, y * kv, z * kv);
+		    // System.out.println("COMMAND: move " + x * kv + " " + y * kv + " " + z * kv); // Debugging
+		} 
 	    } else if (cmd.equals("rotate")) {
-		if (executed = typecheck(typebuffer, new int[]{STR, NUM}))
+		if (executed = typecheck(typebuffer, new int[]{STR, NUM})) {
 		    c.rotate(nextChar(buffer), nextDouble(buffer));
+		}
+		else if (executed = typecheck(typebuffer, new int[]{STR, NUM, STR})) {
+		    char axis = nextChar(buffer);
+		    double theta = nextDouble(buffer);
+		    double kv = c.getKnobValue(nextString(buffer), curframe);
+		    c.rotate(axis, theta * kv);
+		    // System.out.println("COMMAND: rotate " + axis + " " + theta * kv); // Debugging
+		}
 	    } else if (cmd.equals("apply")) {
 		if (executed = typecheck(typebuffer, new int[]{}))
 		    c.apply();
@@ -250,6 +289,9 @@ public class Picture {
 				   nextInt(buffer));
 	    } else if (cmd.equals("frames")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM}))
+		    ; // Nothing
+	    } else if (cmd.equals("vary")) {
+		if (executed = typecheck(typebuffer, new int[]{STR, NUM, NUM, NUM, NUM}))
 		    ; // Nothing
 	    } else if (cmd.equals("basename")) {
 		if (executed = typecheck(typebuffer, new int[]{STR}))

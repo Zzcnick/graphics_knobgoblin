@@ -9,11 +9,11 @@ public class Canvas {
     private Pixel[][] save; // Save State
     private Matrix edges; // Lines
     private Stack<Matrix> transform; // Transformation Matrix
+
     private int x, y; // Dimensions
     private int mode; // Edges or Polygons
-    private HashMap<String, ArrayList<Matrix>> frames = null; // Frames
-    private ArrayList<String> order = null; // Order of Knobs
-    private int framecount = 0;
+    private HashMap<String, ArrayList<Double>> frames = null; // Frames
+    private int framecount = 1;
     private String basename = "out";
 
     // Constructors
@@ -62,11 +62,34 @@ public class Canvas {
 	mode = md;
     }
 
-    // Frame Initialization
+    // Animation
     public void initFrames(double n) {
-	frames = new HashMap<String, ArrayList<Matrix>>();
-	order = new ArrayList<String>();
+	frames = new HashMap<String, ArrayList<Double>>();
 	framecount = (int)n;
+    }
+    public void addKnob(String name,
+			int startFrame, int endFrame,
+			double startValue, double endValue) {
+	// Note: Will go from [start, end) and exclude end
+	double inc = (endValue - startValue) / (endFrame - startFrame + 1);
+	double cur = startValue;
+	if (!frames.containsKey(name)) {
+	    frames.put(name, new ArrayList<Double>(framecount));
+	    for (int i = 0; i < framecount; i++)
+		frames.get(name).add(new Double(0)); // ArrayList Initialization
+	}
+	for (int i = startFrame; i <= endFrame; i++) {
+	    frames.get(name).set(i, cur);
+	    cur += inc;
+	}
+	// System.out.println("Knob: " + name + "\n" + frames.get(name) + frames.get(name).size()); // Debugging
+    }
+    public void resetCanvas() {
+	canvas = new Pixel[y][x];
+	save = new Pixel[y][x];
+	fill(255, 255, 255);
+	edges = new Matrix();
+	transform = new Stack<Matrix>();
     }
 
     // Accessors + Mutators
@@ -87,6 +110,14 @@ public class Canvas {
     }
     public int getMode() {
 	return mode;
+    }
+    public int getFramecount() {
+	return framecount;
+    }
+    public double getKnobValue(String knob, int frame) {
+	if (frames.containsKey(knob))
+	    return frames.get(knob).get(frame);
+	return 1;
     }
 
     public int setMode(int md) {
@@ -731,19 +762,18 @@ public class Canvas {
 	return true;
     }
 
-    public boolean saveAnimation() throws FileNotFoundException {
-	for (int i = 0; i < framecount; i++) {
-	    // Name Buffer 
-	    int padlen = basename.length() + 3;
-	    String savename = basename;
-	    while (savename.length() + ("" + i).length() < padlen)
-		savename += "0";
-	    savename += i + ".ppm";
+    public boolean saveFrame(int frame) throws FileNotFoundException {
+	// Name Buffer 
+	int padlen = basename.length() + 3;
+	String savename = basename;
+	while (savename.length() + ("" + frame).length() < padlen)
+	    savename += "0";
+	savename += frame + ".ppm";
 	    
-	    // Saving
-	    draw();
-	    save(savename);
-	}
+	// Saving + Resetting
+	save(savename);
+	resetCanvas();
+	
 	return true;
     }
 }

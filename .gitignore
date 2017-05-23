@@ -14,6 +14,7 @@ hs_err_pid*
 *.png
 *.jpg
 *.jpeg
+*.gif
 
 #temp files
 *~

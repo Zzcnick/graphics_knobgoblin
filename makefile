@@ -1,5 +1,5 @@
 all: Picture.java
-	javac Picture.java && java Picture test.scr 
+	javac Picture.java && java Picture test.scr && echo "Converting to GIF..." && convert *.ppm -delay 4 sphere.gif && rm *.ppm
 
 run2: Picture.java
 	make && echo "Running..." && java Picture && make png && rm out.ppm && echo "Saved as out.png" && display out.png
